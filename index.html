@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bit de Suspenso — Generador</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #141417;
+    --surface2: #1c1c21;
+    --border: #2a2a32;
+    --border2: #3a3a45;
+    --purple: #7c6ff7;
+    --purple-dim: #3d3880;
+    --purple-glow: #4e47b0;
+    --text: #e8e6f0;
+    --text-muted: #888899;
+    --text-dim: #555566;
+    --green: #3de8a0;
+    --red: #f75a5a;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* LAYOUT */
+  .app { display: flex; flex-direction: column; min-height: 100vh; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 10;
+  }
+
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--purple);
+    letter-spacing: 0.05em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .logo-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--purple);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .api-status {
+    font-size: 12px; display: flex; align-items: center; gap: 6px;
+    color: var(--text-muted); cursor: pointer;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 999px; padding: 5px 12px;
+    transition: border-color 0.2s;
+  }
+  .api-status:hover { border-color: var(--border2); }
+  .api-status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim); }
+  .api-status.ok .dot { background: var(--green); }
+  .api-status.ok { color: var(--text); }
+
+  main { flex: 1; padding: 32px 24px; max-width: 800px; margin: 0 auto; width: 100%; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 28px; border-bottom: 1px solid var(--border); }
+  .tab {
+    padding: 10px 18px; font-size: 13px; font-weight: 500;
+    color: var(--text-muted); border: none; background: none;
+    cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: color 0.2s, border-color 0.2s;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* FORMS */
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  input[type=text], input[type=password], select, textarea {
+    width: 100%; padding: 10px 12px; font-size: 14px;
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  input[type=text]:focus, input[type=password]:focus, select:focus, textarea:focus {
+    border-color: var(--purple-glow);
+  }
+  textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
+  select { cursor: pointer; }
+  select option { background: var(--surface2); }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 11px 20px; font-size: 14px; font-weight: 500;
+    border-radius: var(--radius); border: none; cursor: pointer;
+    transition: all 0.15s; font-family: 'Space Grotesk', sans-serif;
+  }
+  .btn-primary { background: var(--purple); color: #fff; width: 100%; margin-top: 4px; }
+  .btn-primary:hover { background: #9088ff; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+  .btn-ghost {
+    background: none; color: var(--text-muted); border: 1px solid var(--border);
+    font-size: 12px; padding: 5px 12px;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+
+  /* SPINNER */
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* RESULTS */
+  .results { display: flex; flex-direction: column; gap: 14px; margin-top: 24px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .card-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-muted);
+    display: flex; align-items: center; gap: 7px;
+  }
+  .card-label span.tag {
+    background: var(--purple-dim); color: var(--purple);
+    border-radius: 4px; padding: 1px 6px; font-size: 10px;
+  }
+  .card-body {
+    padding: 16px; font-size: 14px; color: var(--text);
+    line-height: 1.75; white-space: pre-wrap;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .card-body.loading { color: var(--text-dim); font-style: italic; }
+
+  /* TEMAS GRID */
+  .temas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+  @media (max-width: 520px) { .temas-grid { grid-template-columns: 1fr; } }
+
+  .tema-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .tema-card:hover { border-color: var(--purple-glow); background: var(--surface2); }
+  .tema-card.selected { border-color: var(--purple); background: #1a1830; }
+  .tema-card .tc-title { font-size: 14px; font-weight: 500; color: var(--text); }
+  .tema-card .tc-sub { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .tema-card .tc-tag { font-size: 11px; color: var(--purple); font-family: 'Space Mono', monospace; }
+
+  .usar-tema {
+    margin-top: 16px; display: none;
+  }
+  .usar-tema.visible { display: block; }
+
+  /* API MODAL */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+  }
+  .overlay.hidden { display: none; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius-lg); padding: 28px; max-width: 440px; width: 100%;
+  }
+  .modal h2 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+  .modal p { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.6; }
+  .modal a { color: var(--purple); text-decoration: none; }
+  .modal a:hover { text-decoration: underline; }
+  .modal-btns { display: flex; gap: 8px; margin-top: 16px; }
+  .modal-btns .btn { flex: 1; }
+
+  /* NOTICE */
+  .notice {
+    background: #1a1830; border: 1px solid var(--purple-dim);
+    border-radius: var(--radius); padding: 12px 16px;
+    font-size: 13px; color: var(--text-muted); line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  .notice strong { color: var(--text); }
+
+  /* STEPS */
+  .step { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start; }
+  .step-num {
+    width: 24px; height: 24px; border-radius: 50%; background: var(--purple-dim);
+    color: var(--purple); font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    font-family: 'Space Mono', monospace; margin-top: 1px;
+  }
+  .step-text { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  .step-text strong { color: var(--text); }
+  .step-text code {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 6px; font-family: 'Space Mono', monospace; font-size: 12px;
+    color: var(--green);
+  }
+
+  footer {
+    text-align: center; padding: 18px;
+    font-size: 12px; color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-dot"></div>
+      BIT DE SUSPENSO
+    </div>
+    <button class="api-status" id="apiStatusBtn" onclick="abrirModal()">
+      <span class="dot"></span>
+      <span id="apiStatusTxt">API key no configurada</span>
+    </button>
+  </header>
+
+  <!-- MAIN -->
+  <main>
+    <div class="tabs">
+      <button class="tab active" onclick="cambiarTab('temas', this)">💡 Ideas de temas</button>
+      <button class="tab" onclick="cambiarTab('generador', this)">✍️ Generar episodio</button>
+      <button class="tab" onclick="cambiarTab('ayuda', this)">📖 Ayuda</button>
+    </div>
+
+    <!-- TAB: TEMAS -->
+    <div class="panel active" id="tab-temas">
+      <div class="notice">
+        <strong>¿Sin ideas?</strong> Genera una tanda de temas para Bit de Suspenso y luego usa el que más te guste en el generador de episodios.
+      </div>
+
+      <div class="field">
+        <label>Dirección o mood (opcional)</label>
+        <input type="text" id="moodTemas" placeholder="ej. vigilancia masiva, inteligencia artificial emocional, redes sociales..." />
+      </div>
+      <button class="btn btn-primary" id="btnTemas" onclick="generarTemas()">
+        <span>Generar 6 ideas de temas</span>
+      </button>
+
+      <div id="temasContainer"></div>
+    </div>
+
+    <!-- TAB: GENERADOR -->
+    <div class="panel" id="tab-generador">
+      <div class="row">
+        <div class="field">
+          <label>Tema o tecnología central *</label>
+          <input type="text" id="tema" placeholder="ej. algoritmos de recomendación..." />
+        </div>
+        <div class="field">
+          <label>Tono del episodio</label>
+          <select id="tono">
+            <option value="psicológico y lento">Psicológico y lento</option>
+            <option value="claustrofóbico y tenso">Claustrofóbico y tenso</option>
+            <option value="frío y distópico">Frío y distópico</option>
+            <option value="ambiguo y filosófico">Ambiguo y filosófico</option>
+            <option value="urgente y paranoico">Urgente y paranoico</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Protagonista</label>
+          <select id="prota">
+            <option value="un ciudadano común atrapado por el sistema">Ciudadano común</option>
+            <option value="un desarrollador de software que descubre algo que no debería saber">Desarrollador de software</option>
+            <option value="una persona anónima en una megaciudad vigilada">Persona en ciudad vigilada</option>
+            <option value="un investigador o periodista">Investigador / periodista</option>
+            <option value="un trabajador de una gran corporación tecnológica">Empleado de corp tecnológica</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Duración del guion</label>
+          <select id="duracion">
+            <option value="corto (3-5 min, ~600 palabras)">Corto (3-5 min)</option>
+            <option value="medio (7-10 min, ~1200 palabras)" selected>Medio (7-10 min)</option>
+            <option value="largo (12-15 min, ~1800 palabras)">Largo (12-15 min)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Contexto extra (opcional)</label>
+        <textarea id="extra" placeholder="Alguna idea específica, referencia, evento real que te inspire..."></textarea>
+      </div>
+      <button class="btn btn-primary" id="btnGen" onclick="generarEpisodio()">
+        <span>Generar episodio completo</span>
+      </button>
+      <div class="results" id="results"></div>
+    </div>
+
+    <!-- TAB: AYUDA -->
+    <div class="panel" id="tab-ayuda">
+      <div style="margin-bottom: 28px;">
+        <p style="font-size: 16px; font-weight: 500; margin-bottom: 16px; color: var(--text);">Cómo configurar tu API key</p>
+        <div class="step"><div class="step-num">1</div><div class="step-text">Ve a <a href="https://console.anthropic.com" target="_blank" style="color:var(--purple)">console.anthropic.com</a> e inicia sesión (o crea una cuenta gratis).</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-text">En el menú lateral busca <strong>"API Keys"</strong> y haz clic en <strong>"Create Key"</strong>.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-text">Copia la key que empieza con <code>sk-ant-...</code></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-text">Vuelve aquí y haz clic en el botón arriba a la derecha que dice <strong>"API key no configurada"</strong> y pégala.</div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-text">La key se guarda en tu navegador. No se envía a ningún servidor nuestro — va directo a Anthropic.</div></div>
+      </div>
+
+      <div style="margin-bottom: 28px;">
+        <p style="font-size: 16px; font-weight: 500; margin-bottom: 16px; color: var(--text);">Cómo subir esta app a GitHub Pages</p>
+        <div class="step"><div class="step-num">1</div><div class="step-text">Ve a <a href="https://github.com" target="_blank" style="color:var(--purple)">github.com</a> y crea un repositorio nuevo. Nómbralo como quieras, ej: <code>bit-generador</code>.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-text">Sube el archivo <code>index.html</code> que descargaste. En GitHub puedes hacerlo directo desde el navegador: abre el repo → botón <strong>"Add file"</strong> → <strong>"Upload files"</strong>.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-text">Ve a <strong>Settings</strong> del repo → sección <strong>"Pages"</strong> → en "Source" selecciona <strong>"Deploy from a branch"</strong> → elige la rama <code>main</code> y carpeta <code>/ (root)</code> → clic en <strong>Save</strong>.</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-text">Espera 1-2 minutos y tu app estará en <code>https://TU-USUARIO.github.io/bit-generador/</code></div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-text">Guarda esa URL en favoritos. Desde ese momento la abres desde cualquier lugar, sin VPN, en cualquier red.</div></div>
+      </div>
+
+      <div class="notice">
+        <strong>¿La API tiene costo?</strong> Sí, pero es muy barato. Cada episodio generado cuesta aprox. $0.01–$0.03 USD. Con $5 tienes para cientos de episodios. Puedes ver tu consumo en <a href="https://console.anthropic.com" target="_blank" style="color:var(--purple)">console.anthropic.com</a>.
+      </div>
+    </div>
+  </main>
+
+  <footer>bit de suspenso — generador v1.0 — pequeñas dosis de tecnología que salió mal</footer>
+</div>
+
+<!-- MODAL API KEY -->
+<div class="overlay hidden" id="apiModal">
+  <div class="modal">
+    <h2>🔑 Configurar API key</h2>
+    <p>Tu API key de Anthropic. Se guarda solo en este navegador, nunca sale de tu dispositivo.<br>
+    Consíguela en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys.</p>
+    <div class="field">
+      <label>API Key</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." />
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarKey()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── API KEY ───────────────────────────────────────────────
+function getKey() { return localStorage.getItem('bds_apikey') || ''; }
+
+function actualizarEstadoKey() {
+  const key = getKey();
+  const btn = document.getElementById('apiStatusBtn');
+  const txt = document.getElementById('apiStatusTxt');
+  if (key) {
+    btn.classList.add('ok');
+    txt.textContent = 'API key ✓';
+  } else {
+    btn.classList.remove('ok');
+    txt.textContent = 'API key no configurada';
+  }
+}
+
+function abrirModal() {
+  document.getElementById('apiKeyInput').value = getKey();
+  document.getElementById('apiModal').classList.remove('hidden');
+}
+
+function cerrarModal() {
+  document.getElementById('apiModal').classList.add('hidden');
+}
+
+function guardarKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val) { alert('Pega tu API key primero.'); return; }
+  localStorage.setItem('bds_apikey', val);
+  actualizarEstadoKey();
+  cerrarModal();
+}
+
+// ─── TABS ──────────────────────────────────────────────────
+function cambiarTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ─── API CALL ──────────────────────────────────────────────
+async function llamarAPI(prompt, maxTokens) {
+  const key = getKey();
+  if (!key) { abrirModal(); throw new Error('Sin API key'); }
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    if (resp.status === 401) throw new Error('API key inválida. Verifícala en console.anthropic.com');
+    throw new Error(err.error?.message || 'Error ' + resp.status);
+  }
+
+  const data = await resp.json();
+  return data.content?.map(i => i.text || '').join('') || '';
+}
+
+// ─── GENERAR TEMAS ─────────────────────────────────────────
+let temaSeleccionado = null;
+
+async function generarTemas() {
+  const mood = document.getElementById('moodTemas').value.trim();
+  const btn = document.getElementById('btnTemas');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div><span>Generando ideas...</span>';
+
+  const container = document.getElementById('temasContainer');
+  container.innerHTML = '';
+
+  const prompt = `Eres el guionista creativo del canal de YouTube "Bit de Suspenso". Es un canal de suspenso tecnológico con estas características:
+- NO terror ni gore. Suspenso psicológico y tecnológico.
+- Estética cyberpunk/distópica. Finales abiertos.
+- La pregunta central: "¿Y si esto pasara mañana?"
+- Videos narrados con imágenes generadas por IA.
+
+Genera 6 ideas de temas/premisas originales para episodios.
+${mood ? `Dirección sugerida: ${mood}` : 'Varía los temas, que sean originales e inquietantes.'}
+
+Responde ÚNICAMENTE con JSON válido, sin texto previo ni backticks:
+[
+  {
+    "titulo_idea": "Nombre corto del concepto (máx 5 palabras)",
+    "tecnologia": "La tecnología específica involucrada",
+    "premisa": "Una oración que resume el dilema o situación inquietante (máx 25 palabras)",
+    "gancho": "La pregunta perturbadora que deja al espectador pensando"
+  }
+]`;
+
+  try {
+    const raw = await llamarAPI(prompt, 1200);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const temas = JSON.parse(clean);
+
+    const grid = document.createElement('div');
+    grid.className = 'temas-grid';
+
+    temas.forEach((t, i) => {
+      const card = document.createElement('div');
+      card.className = 'tema-card';
+      card.dataset.tema = t.tecnologia;
+      card.innerHTML = `
+        <div class="tc-tag">${t.titulo_idea}</div>
+        <div class="tc-title">${t.tecnologia}</div>
+        <div class="tc-sub">${t.premisa}</div>
+        <div class="tc-sub" style="color:var(--purple-glow); margin-top:4px; font-style:italic; font-size:11px;">${t.gancho}</div>
+      `;
+      card.onclick = () => seleccionarTema(card, t.tecnologia);
+      grid.appendChild(card);
+    });
+
+    container.appendChild(grid);
+
+    const usarBtn = document.createElement('div');
+    usarBtn.className = 'usar-tema';
+    usarBtn.id = 'usarTemaBtn';
+    usarBtn.innerHTML = `<button class="btn btn-primary" onclick="irAGenerador()">Usar este tema en el generador →</button>`;
+    container.appendChild(usarBtn);
+
+  } catch(e) {
+    container.innerHTML = `<div class="notice" style="border-color:var(--red); color:var(--red);">Error: ${e.message}</div>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>Generar 6 ideas de temas</span>';
+}
+
+function seleccionarTema(card, tema) {
+  document.querySelectorAll('.tema-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  temaSeleccionado = tema;
+  const btn = document.getElementById('usarTemaBtn');
+  if (btn) btn.classList.add('visible');
+}
+
+function irAGenerador() {
+  if (!temaSeleccionado) return;
+  document.getElementById('tema').value = temaSeleccionado;
+  document.querySelectorAll('.tab')[1].click();
+}
+
+// ─── GENERAR EPISODIO ─────────────────────────────────────
+const SECCIONES = [
+  { key: 'titulo', label: 'Título del episodio', tag: 'YouTube' },
+  { key: 'gancho', label: 'Gancho de apertura', tag: 'Voz en off' },
+  { key: 'guion', label: 'Guion completo narrado', tag: 'Grabar' },
+  { key: 'prompts_imagenes', label: 'Prompts de imágenes', tag: 'IA' },
+  { key: 'descripcion_youtube', label: 'Descripción de YouTube', tag: 'Publicar' },
+  { key: 'tags', label: 'Tags / palabras clave', tag: 'SEO' },
+  { key: 'prompt_miniatura', label: 'Prompt de miniatura', tag: 'Midjourney' },
+  { key: 'ideas_miniatura', label: 'Ideas de miniatura', tag: 'Visual' },
+];
+
+async function generarEpisodio() {
+  const tema = document.getElementById('tema').value.trim();
+  if (!tema) { alert('Escribe un tema o tecnología central.'); return; }
+
+  const tono = document.getElementById('tono').value;
+  const prota = document.getElementById('prota').value;
+  const dur = document.getElementById('duracion').value;
+  const extra = document.getElementById('extra').value.trim();
+
+  const btn = document.getElementById('btnGen');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div><span>Generando episodio...</span>';
+
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML = SECCIONES.map(s => `
+    <div class="card" id="card-${s.key}">
+      <div class="card-head">
+        <span class="card-label">${s.label} <span class="tag">${s.tag}</span></span>
+      </div>
+      <div class="card-body loading" id="body-${s.key}">Generando...</div>
+    </div>
+  `).join('');
+
+  const prompt = `Eres el escritor creativo del canal de YouTube "Bit de Suspenso". Canal de ficción especulativa:
+- Suspenso psicológico y tecnológico, NO terror ni gore
+- Estética cyberpunk/distópica, finales abiertos que siembran duda
+- Narraciones reflexivas con crítica social sutil
+- La pregunta central: "¿Y si esto pasara mañana?"
+- Videos narrados en voz en off sobre imágenes generadas por IA (sin personas en cámara)
+
+Parámetros del episodio:
+- Tecnología/tema: ${tema}
+- Tono: ${tono}
+- Protagonista: ${prota}
+- Duración: ${dur}
+${extra ? `- Contexto adicional: ${extra}` : ''}
+
+Responde ÚNICAMENTE con JSON válido, sin backticks ni texto previo:
+{
+  "titulo": "Título impactante (máx 60 caracteres, sin clickbait barato)",
+  "gancho": "Primeras 2-3 oraciones que enganchan al oyente desde el inicio",
+  "guion": "Guion completo narrado listo para voz en off. Incluye pausas con [pausa]. Final abierto y perturbador.",
+  "prompts_imagenes": "8-12 prompts en inglés para generar imágenes con IA, uno por escena. Formato:\\n1. [descripción detallada, cyberpunk style, dramatic lighting, no faces]\\n2. ...",
+  "descripcion_youtube": "Descripción completa (150-300 palabras): hook inicial, de qué trata sin spoilers, hashtags al final",
+  "tags": "20-25 tags separados por coma, español e inglés mezclados",
+  "prompt_miniatura": "Prompt en inglés para miniatura con Midjourney/DALL-E: dark cyberpunk, dramatic, no text, no faces, 16:9",
+  "ideas_miniatura": "3 conceptos visuales alternativos para la miniatura, uno por línea"
+}`;
+
+  try {
+    const raw = await llamarAPI(prompt, 4000);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    SECCIONES.forEach(s => {
+      const body = document.getElementById('body-' + s.key);
+      const head = document.querySelector(`#card-${s.key} .card-head`);
+      if (body) {
+        body.className = 'card-body';
+        body.textContent = parsed[s.key] || '(sin contenido)';
+      }
+      if (head) {
+        head.innerHTML = `
+          <span class="card-label">${s.label} <span class="tag">${s.tag}</span></span>
+          <button class="btn btn-ghost" onclick="copiar('${s.key}')">Copiar</button>
+        `;
+      }
+    });
+
+  } catch(e) {
+    resultsDiv.innerHTML = `<div class="card"><div class="card-body loading">Error: ${e.message}</div></div>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>Generar episodio completo</span>';
+}
+
+function copiar(key) {
+  const el = document.getElementById('body-' + key);
+  if (el) navigator.clipboard.writeText(el.textContent).catch(() => {});
+}
+
+// ─── INIT ──────────────────────────────────────────────────
+actualizarEstadoKey();
+</script>
+</body>
+</html>
