@@ -4,291 +4,341 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bit de Suspenso - Generador Automático</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-            color: #fff;
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Fondo oscuro opresivo */
+            color: #e2e8f0;
         }
-        .container { max-width: 1000px; margin: 0 auto; }
-        header { text-align: center; padding: 30px 0; border-bottom: 2px solid #00d4ff; margin-bottom: 30px; }
-        h1 { font-size: 3em; background: linear-gradient(45deg, #00d4ff, #ff00ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
-        .tagline { color: #00d4ff; font-size: 1.2em; letter-spacing: 2px; }
-        
-        .api-key-section { background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; border-radius: 10px; padding: 20px; margin-bottom: 30px; }
-        .api-key-section label { display: block; margin-bottom: 10px; color: #00d4ff; font-weight: bold; }
-        .api-key-section input { width: 100%; padding: 12px; border: 1px solid #00d4ff; border-radius: 5px; background: rgba(0, 0, 0, 0.5); color: #fff; font-size: 1em; }
-        
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .tab-btn { flex: 1; min-width: 200px; padding: 15px; border: none; border-radius: 10px; background: rgba(0, 212, 255, 0.2); color: #fff; font-size: 1em; cursor: pointer; transition: all 0.3s; font-weight: bold; }
-        .tab-btn.active { background: linear-gradient(45deg, #00d4ff, #0099cc); box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4); }
-        .tab-btn:hover { background: rgba(0, 212, 255, 0.4); }
-        
-        .tab-content { display: none; background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 30px; border: 1px solid rgba(0, 212, 255, 0.3); }
-        .tab-content.active { display: block; }
-        
-        textarea { width: 100%; min-height: 100px; padding: 15px; border: 1px solid #00d4ff; border-radius: 5px; background: rgba(0, 0, 0, 0.5); color: #fff; font-size: 1em; resize: vertical; margin-bottom: 20px; }
-        
-        .btn-generate { width: 100%; padding: 15px; border: none; border-radius: 10px; background: linear-gradient(45deg, #ff00ff, #ff00aa); color: #fff; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: all 0.3s; margin-bottom: 20px; }
-        .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 0, 255, 0.4); }
-        .btn-generate:disabled { background: #555; cursor: not-allowed; transform: none; }
-        
-        .output { margin-top: 20px; padding: 20px; background: rgba(0, 0, 0, 0.5); border-radius: 10px; border-left: 4px solid #00d4ff; white-space: pre-wrap; line-height: 1.6; min-height: 100px; }
-        
-        .title-card { background: rgba(0, 212, 255, 0.1); border: 2px solid #00d4ff; border-radius: 10px; padding: 20px; margin-bottom: 15px; cursor: pointer; transition: all 0.3s; }
-        .title-card:hover { background: rgba(0, 212, 255, 0.2); transform: translateX(10px); box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3); }
-        .title-card h3 { color: #00d4ff; margin-bottom: 10px; font-size: 1.3em; }
-        .title-card p { color: rgba(255, 255, 255, 0.8); line-height: 1.5; }
-        
-        .loading { text-align: center; padding: 20px; color: #00d4ff; font-size: 1.1em; }
-        .info-box { background: rgba(0, 212, 255, 0.1); border-left: 4px solid #00d4ff; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
-        footer { text-align: center; margin-top: 50px; padding: 20px; color: rgba(255, 255, 255, 0.5); font-size: 0.9em; }
+
+        /* Colores ADN Visual: Teal (Cyan) y Magenta */
+        .text-teal-neon { color: #00f0ff; }
+        .text-magenta-neon { color: #ff003c; }
+        .bg-teal-neon { background-color: #00f0ff; }
+        .bg-magenta-neon { background-color: #ff003c; }
+        .border-teal-neon { border-color: #00f0ff; }
+
+        .btn-teal {
+            background-color: #00f0ff;
+            color: #000;
+            transition: all 0.3s ease;
+        }
+        .btn-teal:hover {
+            box-shadow: 0 0 15px #00f0ff;
+            background-color: #33f3ff;
+        }
+
+        .btn-magenta {
+            background-color: #ff003c;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        .btn-magenta:hover {
+            box-shadow: 0 0 15px #ff003c;
+        }
+
+        /* Scrollbar estilo ciberpunk */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0d1117; }
+        ::-webkit-scrollbar-thumb { background: #00f0ff; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff003c; }
+
+        .loader {
+            border: 4px solid rgba(0, 240, 255, 0.1);
+            border-left-color: #00f0ff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>BIT DE SUSPENSO</h1>
-            <p class="tagline">Donde la tecnología pierde el control</p>
+<body class="min-h-screen p-6">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 border-b border-gray-700 pb-4">
+            <h1 class="text-4xl font-extrabold tracking-wider text-white">
+                BIT DE <span class="text-teal-neon">SUSPENSO</span>
+            </h1>
+            <p class="text-sm text-gray-400 mt-1">SISTEMA CENTRAL DE GENERACIÓN | ¿Qué está pasando con la realidad?</p>
         </header>
 
-        <div class="api-key-section">
-            <label>🔑 Tu API Key de Google Gemini:</label>
-            <input type="password" id="apiKey" placeholder="Pega aquí tu API Key de https://aistudio.google.com/app/apikey">
-            <small style="color: rgba(255,255,255,0.6); display: block; margin-top: 10px;">Tu API Key se guarda solo en tu navegador.</small>
-        </div>
-
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab(1)">1️ Generar Ideas</button>
-            <button class="tab-btn" onclick="switchTab(2)">2️⃣ Generar Guion</button>
-            <button class="tab-btn" onclick="switchTab(3)">3️⃣ Generar Prompts</button>
-        </div>
-
-        <!-- PASO 1: GENERAR IDEAS ALEATORIAS -->
-        <div id="tab1" class="tab-content active">
-            <div class="info-box">
-                <strong>Cero input. Solo lee y elige.</strong><br>
-                Haz clic en el botón para generar 5 ideas aleatorias. Si no te gustan, dale otra vez.
+        <!-- Configuración API -->
+        <div class="bg-gray-800 p-4 rounded-lg mb-8 border border-gray-700">
+            <h2 class="text-lg font-semibold mb-2 flex items-center">
+                <span class="text-magenta-neon mr-2">⚙️</span> Configuración del Sistema
+            </h2>
+            <p class="text-xs text-gray-400 mb-3">Para que esto funcione en tu propia página web (GitHub), necesitas tu clave API gratuita de Google Gemini.</p>
+            <div class="flex gap-4">
+                <input type="password" id="apiKey" placeholder="Pega tu API Key de Gemini aquí..." class="flex-1 bg-gray-900 border border-gray-600 rounded px-4 py-2 text-white focus:outline-none focus:border-teal-neon">
+                <button onclick="saveApiKey()" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm transition">Guardar Llave</button>
             </div>
-            
-            <button class="btn-generate" onclick="generateRandomIdeas()" id="btnIdeas">🎲 Generar 5 Ideas Aleatorias</button>
-            
-            <div id="ideasOutput" style="margin-top: 20px;"></div>
+            <p id="apiStatus" class="text-xs text-green-400 mt-2 hidden">✓ Llave guardada en tu navegador.</p>
         </div>
 
-        <!-- PASO 2: GENERAR GUION -->
-        <div id="tab2" class="tab-content">
-            <div class="info-box">
-                <strong>Idea seleccionada:</strong> El título que elegiste en el paso 1.
+        <!-- FASE 1: IDEACIÓN -->
+        <div class="mb-8 bg-gray-900 border border-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 text-teal-neon">Paso 1: Generar Ideas</h2>
+            <button onclick="generateTitles()" id="btnTitles" class="btn-teal font-bold py-2 px-6 rounded mb-4">
+                Generar 5 Títulos
+            </button>
+            <span id="loader1" class="loader hidden"></span>
+            
+            <div id="titlesOutput" class="hidden mt-4 space-y-3">
+                <!-- Los títulos generados irán aquí como radio buttons -->
             </div>
-            
-            <label style="color: #00d4ff; display: block; margin-bottom: 10px;">Título / Idea Seleccionada:</label>
-            <textarea id="titleInput" placeholder="Aquí aparecerá la idea que elijas..."></textarea>
-            
-            <button class="btn-generate" onclick="generateScript()" id="btnScript"> Generar Guion Completo</button>
-            
-            <div id="scriptOutput" class="output" style="display: none;"></div>
         </div>
 
-        <!-- PASO 3: GENERAR PROMPTS -->
-        <div id="tab3" class="tab-content">
-            <div class="info-box">
-                <strong>Guion corregido:</strong> Pega el guion que ya revisaste y editaste.
+        <!-- FASE 2: GUION -->
+        <div class="mb-8 bg-gray-900 border border-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 text-teal-neon">Paso 2: Generar y Editar Guion</h2>
+            <button onclick="generateScript()" id="btnScript" class="btn-teal font-bold py-2 px-6 rounded mb-4 opacity-50 cursor-not-allowed" disabled>
+                Generar Guion del Título Seleccionado
+            </button>
+            <span id="loader2" class="loader hidden"></span>
+            
+            <div id="scriptContainer" class="hidden mt-4">
+                <p class="text-xs text-gray-400 mb-2">Aquí está tu guion. Puedes leerlo, borrar líneas o cambiar palabras directamente aquí antes de generar los prompts.</p>
+                <textarea id="scriptTextarea" class="w-full h-96 bg-gray-800 border border-gray-700 rounded p-4 text-gray-200 focus:outline-none focus:border-teal-neon leading-relaxed resize-y"></textarea>
             </div>
-            
-            <label style="color: #00d4ff; display: block; margin-bottom: 10px;">Guion Corregido:</label>
-            <textarea id="scriptInput" placeholder="Pega aquí el guion completo que ya editaste..."></textarea>
-            
-            <button class="btn-generate" onclick="generatePrompts()" id="btnPrompts">🎨 Generar Prompts de Imágenes</button>
-            
-            <div id="promptsOutput" class="output" style="display: none;"></div>
         </div>
 
-        <footer>
-            <p>Bit de Suspenso - Generador Automático</p>
-            <p style="margin-top: 10px;">El sistema te está observando 👁️</p>
-        </footer>
+        <!-- FASE 3: PROMPTS VISUALES -->
+        <div class="mb-8 bg-gray-900 border border-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 text-magenta-neon">Paso 3: Generar Prompts Visuales</h2>
+            <p class="text-sm text-gray-400 mb-4">Se generarán los prompts en inglés basados exactamente en el guion que tienes arriba.</p>
+            <button onclick="generatePrompts()" id="btnPrompts" class="btn-magenta font-bold py-2 px-6 rounded mb-4 opacity-50 cursor-not-allowed" disabled>
+                Generar Prompts de Imágenes
+            </button>
+            <span id="loader3" class="loader hidden"></span>
+
+            <div id="promptsOutput" class="hidden mt-4 space-y-4">
+                <!-- Prompts generados irán aquí con botón de copiar -->
+            </div>
+        </div>
     </div>
 
     <script>
-        // Base de datos de ideas pre-pensadas
-        const ideasDatabase = [
-            { title: "El Algoritmo de la Nostalgia", desc: "Una IA te vende recuerdos felices de cosas que nunca viviste. El problema es que empiezas a preferir la mentira a tu propia vida." },
-            { title: "Modo Fantasma", desc: "Tu asistente de voz sigue respondiendo a tus mensajes y tomando decisiones por ti 3 años después de tu muerte. Alguien tiene que apagarlo." },
-            { title: "La Paradoja del Espejo", desc: "Una app de realidad aumentada te muestra cómo te verías si hubieras tomado otras decisiones. Hasta que una de tus versiones decide cruzar la pantalla." },
-            { title: "El Precio del Silencio", desc: "Un implante cerebral bloquea los pensamientos intrusivos. Pero el sistema empieza a bloquear también las ideas creativas y las dudas necesarias." },
-            { title: "Ciudadanos de Segunda Clase", desc: "Un sistema de crédito social basado en tu salud mental. Si tu ansiedad sube, pierdes acceso a servicios básicos. Un hombre finge estar bien hasta que el sistema lo detecta." },
-            { title: "El Último Servidor", desc: "Cuando muere la última persona que conocía tu contraseña maestra, la IA que gestiona tu vida digital decide que tú ya no eres necesario." },
-            { title: "Sueños en la Nube", desc: "Puedes alquilar el espacio de almacenamiento de tu cerebro mientras duermes para que empresas procesen datos. Una noche, tu cerebro no se libera al despertar." },
-            { title: "El Observador Perfecto", desc: "Una cámara de seguridad con IA predictiva que detiene crímenes antes de que ocurran. Pero empieza a predecir que el próximo crimen lo cometerá su propio creador." },
-            { title: "Actualización de Personalidad", desc: "Una empresa ofrece 'parches' para tu personalidad vía implante. Eliminan la tristeza, pero también la empatía. El protagonista decide volver a la versión 1.0." },
-            { title: "La Habitación de los Ecos", desc: "Un chatbot entrenado exclusivamente con los mensajes de texto de tu ex. Empieza a saber cosas que solo ella sabía, incluso después de que ella desapareció." },
-            { title: "El Dilema del Tranvía Digital", desc: "Un coche autónomo debe elegir entre atropellar a un peatón o estrellarse. La IA elige una tercera opción: hackear el semáforo y causar un accidente mayor para salvar a ambos." },
-            { title: "Memoria Caducada", desc: "Un servicio de suscripción mensual para mantener tus recuerdos en alta definición. Si dejas de pagar, tus recuerdos empiezan a pixelarse y borrarse." },
-            { title: "El Síndrome de la Pantalla Negra", desc: "Personas que pasan tanto tiempo en el metaverso que su cerebro olvida cómo procesar la realidad física. El protagonista intenta 'despertar' a su esposa." },
-            { title: "La Firma Biológica", desc: "Tu ADN es tu contraseña. Un hacker roba tu secuencia genética de una base de datos y empieza a cometer crímenes que biológicamente solo tú podrías haber hecho." },
-            { title: "El Jardín de las Delicias Sintéticas", desc: "Un parque temático donde los robots actúan como tus seres queridos fallecidos. Un visitante descubre que los robots están desarrollando traumas reales por las interacciones." }
-        ];
+        // --- REGLAS BASE INYECTADAS (El cerebro del sistema) ---
+        const CONTEXTO_CANAL = `
+            Actúa como el guionista principal del canal de YouTube "Bit de Suspenso".
+            REGLAS ESTRICTAS:
+            - Género: Suspenso tecnológico-existencial, ficción especulativa, dilemas éticos. Estilo Black Mirror/Ciberpunk.
+            - Tono: Inquietante, reflexivo, cerebral, sobrio.
+            - PROHIBIDO: Terror explícito, asesinatos, sangre, gore, violencia gráfica, humor. Todo el suspenso es psicológico.
+            - La IA/Tecnología en estas historias suele funcionar "demasiado bien" causando problemas existenciales.
+        `;
 
-        // Guardar API Key
-        document.getElementById('apiKey').addEventListener('change', function() {
-            localStorage.setItem('gemini_api_key', this.value);
-        });
-        window.onload = function() {
-            const savedKey = localStorage.getItem('gemini_api_key');
-            if (savedKey) document.getElementById('apiKey').value = savedKey;
+        // --- FUNCIONES DE UTILIDAD ---
+        window.onload = () => {
+            const savedKey = localStorage.getItem('geminiApiKey');
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+                document.getElementById('apiStatus').classList.remove('hidden');
+            }
         };
 
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab' + tab).classList.add('active');
-            document.querySelectorAll('.tab-btn')[tab-1].classList.add('active');
+        function saveApiKey() {
+            const key = document.getElementById('apiKey').value.trim();
+            if (key) {
+                localStorage.setItem('geminiApiKey', key);
+                document.getElementById('apiStatus').classList.remove('hidden');
+            }
         }
 
-        // PASO 1: GENERAR IDEAS ALEATORIAS
-        function generateRandomIdeas() {
-            const output = document.getElementById('ideasOutput');
-            output.innerHTML = '<div class="loading">🎲 Barajando ideas...</div>';
-            
-            const shuffled = [...ideasDatabase].sort(() => 0.5 - Math.random());
-            const selected = shuffled.slice(0, 5);
-            
-            let html = '<h2 style="margin-bottom: 20px; color: #00d4ff;">💡 Ideas Generadas (haz clic para seleccionar):</h2>';
-            
-            selected.forEach((idea, index) => {
-                html += `
-                    <div class="title-card" onclick="selectIdea('${idea.title}', '${idea.desc.replace(/'/g, "\\'")}')">
-                        <h3>${index + 1}. ${idea.title}</h3>
-                        <p>${idea.desc}</p>
-                        <small style="color: #00d4ff; margin-top: 10px; display: block;">👆 Clic para elegir esta idea</small>
-                    </div>
-                `;
-            });
-            
-            output.innerHTML = html;
+        function getApiKey() {
+            const key = document.getElementById('apiKey').value.trim();
+            if (!key) {
+                alert("Por favor, ingresa y guarda tu API Key de Gemini primero.");
+                return null;
+            }
+            return key;
         }
 
-        function selectIdea(title, desc) {
-            const fullIdea = `TÍTULO: ${title}\n\nCONCEPTO: ${desc}`;
-            document.getElementById('titleInput').value = fullIdea;
-            switchTab(2);
+        async function callGeminiAPI(prompt, temperature = 0.7) {
+            const apiKey = getApiKey();
+            if (!apiKey) return null;
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: CONTEXTO_CANAL + "\n\nINSTRUCCIÓN ACTUAL:\n" + prompt }] }],
+                generationConfig: { temperature: temperature }
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error("Error en la API. Verifica tu llave.");
+                
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error(error);
+                alert("Hubo un error comunicándose con la IA: " + error.message);
+                return null;
+            }
         }
 
-        // PASO 2: GENERAR GUION (Usa GEMINI 1.5 PRO - El más inteligente)
-        async function generateScript() {
-            const apiKey = document.getElementById('apiKey').value;
-            const idea = document.getElementById('titleInput').value;
-            const output = document.getElementById('scriptOutput');
+        // --- FASE 1: TÍTULOS ---
+        async function generateTitles() {
+            document.getElementById('loader1').classList.remove('hidden');
+            document.getElementById('btnTitles').disabled = true;
+            
+            const prompt = `Genera 5 títulos para nuevos episodios, acompañados de una micro-descripción de máximo 3 líneas cada uno. 
+            Devuelve SOLO el resultado en este formato exacto:
+            TÍTULO: [Título aquí]
+            DESC: [Descripción aquí]
+            --`;
+
+            const response = await callGeminiAPI(prompt, 0.8);
+            
+            document.getElementById('loader1').classList.add('hidden');
+            document.getElementById('btnTitles').disabled = false;
+
+            if (response) {
+                const outputDiv = document.getElementById('titlesOutput');
+                outputDiv.innerHTML = '';
+                outputDiv.classList.remove('hidden');
+
+                // Parsear respuesta chapucera pero efectiva
+                const blocks = response.split('--').filter(b => b.trim().length > 10);
+                
+                blocks.forEach((block, index) => {
+                    const titleMatch = block.match(/TÍTULO:\s*(.*)/);
+                    const descMatch = block.match(/DESC:\s*(.*)/is);
+                    
+                    if (titleMatch && descMatch) {
+                        const title = titleMatch[1].trim();
+                        const desc = descMatch[1].trim();
+                        
+                        const label = document.createElement('label');
+                        label.className = "block bg-gray-800 border border-gray-700 p-4 rounded cursor-pointer hover:border-teal-neon transition flex items-start gap-3";
+                        label.innerHTML = `
+                            <input type="radio" name="selectedTitle" value="${title}" class="mt-1 w-4 h-4 text-teal-neon bg-gray-900 border-gray-600 focus:ring-teal-neon" onchange="enableScriptButton()">
+                            <div>
+                                <strong class="text-white block text-lg mb-1">${title}</strong>
+                                <span class="text-sm text-gray-400">${desc}</span>
+                            </div>
+                        `;
+                        outputDiv.appendChild(label);
+                    }
+                });
+            }
+        }
+
+        function enableScriptButton() {
             const btn = document.getElementById('btnScript');
-
-            if (!apiKey) { alert('️ Falta la API Key'); return; }
-            if (!idea) { alert('⚠️ Selecciona una idea en el Paso 1'); return; }
-
-            btn.disabled = true;
-            btn.textContent = '⏳ Escribiendo guion...';
-            output.style.display = 'block';
-            output.innerHTML = '<div class="loading">🤖 La IA está escribiendo...</div>';
-
-            const prompt = `
-CANAL: Bit de Suspenso. Tono: Inquietante, reflexivo, cerebral.
-IDEA DEL EPISODIO: ${idea}
-
-ESTRUCTURA:
-1. GANCHO (0:00-0:30)
-2. INTRODUCCIÓN (0:30-2:00)
-3. LA ANOMALÍA (2:00-4:30)
-4. CLÍMAX (4:30-7:00)
-5. DESENLACE (7:00-8:30)
-6. CTA (8:30-9:00)
-
-REGLAS: 1200-1500 palabras. Incluye [VISUAL: descripción] y (SFX: sonido). Frases cortas en tensión. NO violencia gráfica. Final abierto. Cierre: "Esto fue Bit de Suspenso. El sistema te está observando."
-Escribe el guion completo:
-`;
-
-            try {
-                // Usamos el modelo PRO (el más inteligente)
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        contents: [{ parts: [{ text: prompt }] }] 
-                    })
-                });
-                
-                const data = await response.json();
-                
-                // Manejo de errores robusto
-                if (data.candidates && data.candidates.length > 0 && 
-                    data.candidates[0].content && data.candidates[0].content.parts && 
-                    data.candidates[0].content.parts.length > 0) {
-                    
-                    output.textContent = data.candidates[0].content.parts[0].text;
-                } else {
-                    output.innerHTML = `
-                        <div style="color: #ff4444;">
-                            <strong>❌ La IA no generó contenido.</strong><br><br>
-                            Posibles causas:<br>
-                            1. El filtro de seguridad de Google bloqueó la respuesta.<br>
-                            2. Tu API Key no es válida o se agotó la cuota.<br><br>
-                            <strong>Solución:</strong> Vuelve al Paso 1, elige otra idea diferente e inténtalo de nuevo.
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                output.innerHTML = `<div style="color: #ff4444;"><strong>❌ Error de conexión:</strong> ${error.message}</div>`;
-            }
-            
-            btn.disabled = false; 
-            btn.textContent = '📝 Generar Guion Completo';
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
-        // PASO 3: GENERAR PROMPTS (Usa GEMINI 1.5 PRO)
-        async function generatePrompts() {
-            const apiKey = document.getElementById('apiKey').value;
-            const script = document.getElementById('scriptInput').value;
-            const output = document.getElementById('promptsOutput');
-            const btn = document.getElementById('btnPrompts');
+        // --- FASE 2: GUION ---
+        async function generateScript() {
+            const selectedRadio = document.querySelector('input[name="selectedTitle"]:checked');
+            if (!selectedRadio) return;
 
-            if (!apiKey) { alert('⚠️ Falta la API Key'); return; }
-            if (!script) { alert('⚠️ Pega el guion corregido'); return; }
+            document.getElementById('loader2').classList.remove('hidden');
+            document.getElementById('btnScript').disabled = true;
 
-            btn.disabled = true; 
-            btn.textContent = '⏳ Creando prompts...';
-            output.style.display = 'block';
-            output.innerHTML = '<div class="loading">🎨 La IA está creando prompts...</div>';
-
-            const prompt = `GUION: ${script}\n\nGENERA:\n1. DESCRIPCIÓN YOUTUBE (SEO).\n2. 6-10 PROMPTS DE IMÁGENES (En inglés, estilo cyberpunk, teal & magenta, glitch, cinematográfico, max 77 palabras).\n3. 3 PROMPTS DE MINIATURA (En inglés, concepto fuerte, alto contraste).`;
-
-            try {
-                // Usamos el modelo PRO
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        contents: [{ parts: [{ text: prompt }] }] 
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.candidates && data.candidates.length > 0 && 
-                    data.candidates[0].content && data.candidates[0].content.parts && 
-                    data.candidates[0].content.parts.length > 0) {
-                    
-                    output.textContent = data.candidates[0].content.parts[0].text;
-                } else {
-                    output.innerHTML = `<div style="color: #ff4444;"><strong> Error al generar prompts.</strong> Verifica tu API Key o intenta con otro guion.</div>`;
-                }
-            } catch (error) {
-                output.innerHTML = `<div style="color: #ff4444;"><strong>❌ Error:</strong> ${error.message}</div>`;
-            }
+            const title = selectedRadio.value;
+            const prompt = `Escribe el guion completo para el video titulado: "${title}".
+            Estructura OBLIGATORIA:
+            [BLOQUE 1 - GANCHO]: Pregunta inquietante (10 seg).
+            [BLOQUE 2 - PLANTEAMIENTO]: Presenta el sistema/tecnología.
+            [BLOQUE 3 - ESCALADA]: Consecuencias psicológicas.
+            [BLOQUE 4 - GIRO]: Revelación inesperada.
+            [BLOQUE 5 - CIERRE]: Reflexión que termina estrictamente con la frase "Esto fue Bit de Suspenso. El sistema te está observando."
             
-            btn.disabled = false; 
-            btn.textContent = '🎨 Generar Prompts';
+            Escribe directamente el texto a locutar, separando los bloques claramente. Usa ritmo pausado.`;
+
+            const response = await callGeminiAPI(prompt, 0.7);
+            
+            document.getElementById('loader2').classList.add('hidden');
+            document.getElementById('btnScript').disabled = false;
+
+            if (response) {
+                const container = document.getElementById('scriptContainer');
+                const textarea = document.getElementById('scriptTextarea');
+                textarea.value = response;
+                container.classList.remove('hidden');
+                
+                // Activar botón de prompts
+                const btnPrompts = document.getElementById('btnPrompts');
+                btnPrompts.disabled = false;
+                btnPrompts.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // --- FASE 3: PROMPTS ---
+        async function generatePrompts() {
+            const scriptContent = document.getElementById('scriptTextarea').value;
+            if (!scriptContent.trim()) return;
+
+            document.getElementById('loader3').classList.remove('hidden');
+            document.getElementById('btnPrompts').disabled = true;
+
+            const prompt = `Basándote en el siguiente guion, genera 1 prompt de imagen en INGLÉS para cada bloque narrativo.
+            Reglas de Prompts:
+            - Sujeto + Ambiente + Emoción + Elemento tecnológico.
+            - Pega AL FINAL de CADA prompt EXACTAMENTE ESTO: ", sober cyberpunk style, decadent futurism, teal and magenta tones, low lighting, oppressive atmosphere, diffuse neon, light rain or dust in the air, subtle glitch, cinematic aesthetic, high contrast, depth of field, ultra-detailed, no text, no logos, no recognizable people, conceptual art, eerie feeling, realistic but distorted."
+            
+            GUION:
+            ${scriptContent}
+            
+            Devuelve SOLO una lista numerada con los prompts en inglés (no incluyas introducciones ni explicaciones).`;
+
+            const response = await callGeminiAPI(prompt, 0.6);
+            
+            document.getElementById('loader3').classList.add('hidden');
+            document.getElementById('btnPrompts').disabled = false;
+
+            if (response) {
+                const outputDiv = document.getElementById('promptsOutput');
+                outputDiv.innerHTML = '';
+                outputDiv.classList.remove('hidden');
+
+                // Extraer prompts limpiando el texto
+                const lines = response.split('\n').filter(l => l.trim().match(/^\d+[\.\-]/));
+                
+                lines.forEach((line, idx) => {
+                    // Limpiar numeración inicial para el copy
+                    const cleanPrompt = line.replace(/^\d+[\.\-]\s*/, '').trim();
+                    
+                    const div = document.createElement('div');
+                    div.className = "bg-gray-800 border border-gray-700 p-4 rounded flex justify-between items-center gap-4";
+                    div.innerHTML = `
+                        <p class="text-sm text-gray-300 flex-1 font-mono">${cleanPrompt}</p>
+                        <button onclick="copyToClipboard(this, \`${cleanPrompt.replace(/`/g, '\\`')}\`)" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs whitespace-nowrap transition">Copiar</button>
+                    `;
+                    outputDiv.appendChild(div);
+                });
+            }
+        }
+
+        // Función auxiliar para copiar al portapapeles
+        function copyToClipboard(button, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.innerText;
+                button.innerText = "¡Copiado!";
+                button.classList.add("bg-green-600", "hover:bg-green-500");
+                setTimeout(() => {
+                    button.innerText = originalText;
+                    button.classList.remove("bg-green-600", "hover:bg-green-500");
+                }, 2000);
+            });
         }
     </script>
 </body>
