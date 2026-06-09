@@ -180,7 +180,9 @@
 </div>
 
 <script>
-  const GEMINI_KEY = "API_KEY";
+// 1. RECOMENDACIÓN: Obtén una clave real en https://aistudio.google.com/
+// Las claves de Google suelen empezar por "AIza..."
+const GEMINI_KEY = "AQ.Ab8RN6IWOknSemFAfjZsS5ezz6e7EzS0Kw21xUw2zHuRPbicgg"; 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
 
 const VIDEOS_PUBLICADOS = [
@@ -192,35 +194,51 @@ const VIDEOS_PUBLICADOS = [
 ];
 
 const CANAL_CONTEXT = `Eres el escritor creativo de BIT DE SUSPENSO, canal de YouTube de suspenso tecnológico-existencial (ficción especulativa), estilo Black Mirror y ciberpunk.
-
-TONO: Inquietante, reflexivo, cerebral, sobrio. SIN terror explícito, SIN humor, SIN exageración dramática.
-CONTENIDO: Dilemas éticos tecnológicos, control social, manipulación de la memoria, IA como autoridad, pérdida de identidad, suspenso psicológico, finales abiertos.
-PROHIBIDO: Violencia gráfica, gore, lenguaje vulgar, contenido sexual, discursos políticos o religiosos reales.
-DURACIÓN: 4–7 minutos narrado (~600–1000 palabras).
-NARRACIÓN: Voz única, ritmo lento, silencios marcados con [pausa].
-CIERRE FIJO: "Esto fue Bit de Suspenso. El sistema te está observando."
-ESTRUCTURA: 1-Gancho inicial, 2-Planteamiento, 3-Escalada, 4-Giro final, 5-Reflexión final, 6-Cierre de marca.`;
+TONO: Inquietante, reflexivo, cerebral, sobrio. SIN terror explícito.
+ESTRUCTURA: [GANCHO], [PLANTEAMIENTO], [ESCALADA], [GIRO FINAL], [REFLEXIÓN FINAL], [CIERRE].
+CIERRE FIJO: "Esto fue Bit de Suspenso. El sistema te está observando."`;
 
 function switchTab(idx) {
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
   document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===idx));
 }
 
-async function callGemini(prompt) {
-  const res = await fetch(GEMINI_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: CANAL_CONTEXT + "\n\n" + prompt }] }],
-      generationConfig: { temperature: 0.9, maxOutputTokens: 2048 }
-    })
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err?.error?.message || `Error ${res.status}`);
+// Función mejorada para llamar a la API
+async function callGemini(prompt, expectJson = false) {
+  try {
+    const res = await fetch(GEMINI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: CANAL_CONTEXT + "\n\n" + prompt }] }],
+        generationConfig: { 
+            temperature: 0.8, 
+            maxOutputTokens: 2500,
+            topP: 0.95 
+        }
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data?.error?.message || `Error del servidor: ${res.status}`);
+    }
+
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    
+    if (expectJson) {
+      // Limpieza profunda de JSON (elimina Markdown y texto basura)
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return jsonMatch[0];
+      }
+    }
+    return text;
+  } catch (err) {
+    console.error("API Error:", err);
+    throw err;
   }
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
 // ─── 1. TÍTULOS ───────────────────────────────
@@ -230,45 +248,34 @@ async function generarTitulos() {
   loading.classList.add("visible");
   resultado.innerHTML = "";
 
-  const prompt = `Genera exactamente 5 títulos NUEVOS y ORIGINALES para BIT DE SUSPENSO.
-
-TEMAS YA CUBIERTOS — NO repetir:
-${VIDEOS_PUBLICADOS.map((v,i) => `${i+1}. ${v}`).join('\n')}
-
-Los 5 títulos deben explorar ángulos DISTINTOS entre sí y distintos a los ya publicados. Posibles ángulos: IA en el trabajo, vigilancia corporal, sueños controlados, burocracia digital, tiempo comprado, derechos póstumos digitales, consciencia copiada, reputación algorítmica, silencio obligatorio, cuerpo como propiedad del sistema, etc.
-
-Responde ÚNICAMENTE con JSON válido, sin explicaciones, sin markdown, sin texto extra:
-{"titulos":[{"titulo":"texto del título","concepto":"descripción de 1 línea del episodio","angulo":"el ángulo nuevo que explora"}]}`;
+  const prompt = `Genera 5 títulos para BIT DE SUSPENSO. No repitas estos: ${VIDEOS_PUBLICADOS.join(', ')}.
+  Responde ÚNICAMENTE un objeto JSON con este formato: 
+  {"titulos":[{"titulo":"...", "concepto":"...", "angulo":"..."}]}`;
 
   try {
-    const raw = await callGemini(prompt);
-    const clean = raw.replace(/```json|```/g,"").trim();
-    const data = JSON.parse(clean);
+    const raw = await callGemini(prompt, true);
+    const data = JSON.parse(raw);
+    
     resultado.innerHTML = data.titulos.map(t => `
       <div class="card">
         <div class="card-title">${t.titulo}</div>
         <div class="card-meta">↳ ${t.concepto}</div>
-        <div class="card-meta" style="color:rgba(0,229,212,0.5);margin-top:3px">◈ ${t.angulo}</div>
+        <div class="card-meta" style="color:var(--teal); opacity: 0.7">◈ ${t.angulo}</div>
         <div class="card-actions">
-          <button class="btn btn-secondary btn-sm" onclick="usarTitulo(this)">✎ USAR ESTE TÍTULO</button>
+          <button class="btn btn-secondary btn-sm" onclick="usarTitulo('${t.titulo.replace(/'/g, "\\'")}')">✎ USAR ESTE TÍTULO</button>
         </div>
       </div>
     `).join("");
-    // guardamos el titulo en el botón
-    resultado.querySelectorAll('.card').forEach((card, i) => {
-      card.querySelector('button').dataset.titulo = data.titulos[i].titulo;
-    });
   } catch(err) {
-    resultado.innerHTML = `<div class="status-bar" style="color:var(--magenta)">⚠ ${err.message}</div>`;
+    resultado.innerHTML = `<div class="status-bar" style="color:var(--magenta)">⚠ Error: ${err.message}. Revisa tu API Key.</div>`;
   } finally {
     loading.classList.remove("visible");
   }
 }
 
-function usarTitulo(btn) {
-  document.getElementById("titulo-guion").value = btn.dataset.titulo;
+function usarTitulo(titulo) {
+  document.getElementById("titulo-guion").value = titulo;
   switchTab(1);
-  document.getElementById("titulo-guion").focus();
 }
 
 // ─── 2. GUION ─────────────────────────────────
@@ -277,148 +284,87 @@ async function generarGuion() {
   const notas = document.getElementById("notas-guion").value.trim();
   const loading = document.getElementById("loading-guion");
   const resultado = document.getElementById("guion-resultado");
-  if (!titulo) { document.getElementById("titulo-guion").focus(); return; }
+
+  if (!titulo) return alert("Escribe un título");
 
   loading.classList.add("visible");
   resultado.innerHTML = "";
 
-  const prompt = `Escribe el guion completo de un episodio de BIT DE SUSPENSO:
-
-TÍTULO: "${titulo}"
-${notas ? `NOTAS: ${notas}` : ""}
-
-Usa estas etiquetas exactas para estructurar:
-[GANCHO]
-[PLANTEAMIENTO]
-[ESCALADA]
-[GIRO FINAL]
-[REFLEXIÓN FINAL]
-[CIERRE]
-
-Marca silencios con [pausa]. Termina siempre con: "Esto fue Bit de Suspenso. El sistema te está observando."`;
+  const prompt = `Escribe un guion de 800 palabras sobre: "${titulo}". Notas: ${notas}. Usa etiquetas [GANCHO], [ESCALADA], etc.`;
 
   try {
     const guion = await callGemini(prompt);
-    const secciones = [
-      {tag:"GANCHO",label:"GANCHO INICIAL"},
-      {tag:"PLANTEAMIENTO",label:"PLANTEAMIENTO"},
-      {tag:"ESCALADA",label:"ESCALADA DEL SUSPENSO"},
-      {tag:"GIRO FINAL",label:"GIRO FINAL"},
-      {tag:"REFLEXIÓN FINAL",label:"REFLEXIÓN FINAL"},
-      {tag:"CIERRE",label:"CIERRE DE MARCA"}
-    ];
-    let sections = {};
-    let currentSection = null;
-    for (const line of guion.split('\n')) {
-      const match = secciones.find(s => line.includes(`[${s.tag}]`));
-      if (match) { currentSection = match.tag; sections[currentSection] = ""; }
-      else if (currentSection) { sections[currentSection] = (sections[currentSection]||"") + line + "\n"; }
-    }
-    let html = `<div style="margin-bottom:12px"><div class="card-title" style="color:var(--teal)">📡 ${titulo}</div></div><div class="script-scroll">`;
-    if (Object.keys(sections).length > 0) {
-      for (const s of secciones) {
-        if (sections[s.tag]?.trim()) {
-          html += `<div class="script-block"><div class="script-tag">◆ ${s.label}</div>${sections[s.tag].trim().replace(/\n/g,'<br>')}</div>`;
-        }
-      }
-    } else {
-      html += `<div class="script-block">${guion.replace(/\n/g,'<br>')}</div>`;
-    }
-    html += `</div><div class="action-bar">
-      <button class="btn btn-secondary btn-sm" onclick="copyGuion()">COPIAR GUION</button>
-      <button class="btn btn-mag btn-sm" onclick="pasarAPrompts()">→ IR A PROMPTS</button>
-    </div>`;
-    resultado.innerHTML = html;
+    
+    // Formatear el guion para mostrarlo bonito
+    const formattedGuion = guion.replace(/\[(.*?)\]/g, '<div class="script-tag">◆ $1</div>');
+
+    resultado.innerHTML = `
+      <div class="script-scroll">
+        <div class="script-block">${formattedGuion.replace(/\n/g, '<br>')}</div>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-secondary btn-sm" onclick="copyText('guion-raw')">COPIAR GUION</button>
+        <button class="btn btn-mag btn-sm" onclick="pasarAPrompts()">→ GENERAR PROMPTS</button>
+        <div id="guion-raw" style="display:none">${guion}</div>
+      </div>`;
     resultado.dataset.guion = guion;
   } catch(err) {
-    resultado.innerHTML = `<div class="status-bar" style="color:var(--magenta)">⚠ ${err.message}</div>`;
+    resultado.innerHTML = `<div class="status-bar" style="color:var(--magenta)">⚠ Error: ${err.message}</div>`;
   } finally {
     loading.classList.remove("visible");
   }
-}
-
-function copyGuion() {
-  const guion = document.getElementById("guion-resultado").dataset.guion;
-  if (!guion) return;
-  navigator.clipboard.writeText(guion).then(() => {
-    const btn = event.target; btn.textContent = "✓ COPIADO";
-    setTimeout(() => btn.textContent = "COPIAR GUION", 2000);
-  });
-}
-
-function pasarAPrompts() {
-  const guion = document.getElementById("guion-resultado").dataset.guion;
-  if (guion) { document.getElementById("guion-prompts").value = guion; switchTab(2); }
 }
 
 // ─── 3. PROMPTS ───────────────────────────────
 async function generarPrompts() {
   const guion = document.getElementById("guion-prompts").value.trim();
-  const num = parseInt(document.getElementById("num-imagenes").value);
-  const idioma = document.getElementById("idioma-prompts").value;
+  const num = document.getElementById("num-imagenes").value;
   const loading = document.getElementById("loading-prompts");
   const resultado = document.getElementById("prompts-resultado");
-  if (!guion) { document.getElementById("guion-prompts").focus(); return; }
+
+  if (!guion) return alert("Pega un guion");
 
   loading.classList.add("visible");
-  resultado.innerHTML = "";
-
-  const ADN_EN = `Sober cyberpunk style, decadent futurism, teal and magenta tones, low lighting, oppressive atmosphere, diffused neon, light rain or dust in the air, subtle glitch, cinematic aesthetic, high contrast, depth of field, ultra-detailed, no text, no logos, no recognizable people, concept art, unsettling feeling, realistic but distorted.`;
-  const ADN_ES = `Estilo cyberpunk sobrio, futurismo decadente, tonos teal y magenta, iluminación baja, atmósfera opresiva, neón difuso, lluvia ligera o polvo en el aire, glitch sutil, estética cinematográfica, alto contraste, profundidad de campo, ultradetallado, sin texto, sin logos, sin personas reconocibles, arte conceptual, sensación inquietante, realista pero distorsionado.`;
-  const ADN = idioma === "en" ? ADN_EN : ADN_ES;
-  const lang = idioma === "en" ? "in English" : "en español";
-
-  const prompt = `Based on this BIT DE SUSPENSO script, generate exactly ${num} image prompts ${lang} for Copilot/AI image generators.
-
-SCRIPT:
-${guion}
-
-RULES:
-- Distribute prompts across the full script (beginning, middle, climax, ending)
-- Each image must be SYMBOLIC, not a literal scene depiction
-- Structure each prompt: [Main subject] + [Environment] + [Emotional atmosphere] + [Key tech element]
-- End EVERY prompt with this exact style block: "${ADN}"
-
-Respond ONLY with valid JSON, no extra text, no markdown:
-{"prompts":[{"num":1,"momento":"narrative moment name","prompt":"full prompt text"}]}`;
+  
+  const prompt = `Crea ${num} prompts de imagen para este guion. Estilo Cyberpunk, teal y magenta. 
+  Responde solo JSON: {"prompts":[{"num":1, "momento":"...", "prompt":"..."}]}`;
 
   try {
-    const raw = await callGemini(prompt);
-    const clean = raw.replace(/```json|```/g,"").trim();
-    const data = JSON.parse(clean);
-    let html = `<div class="status-bar" style="color:var(--teal)">✓ ${data.prompts.length} PROMPTS GENERADOS — Listos para Copilot</div>`;
-    html += data.prompts.map((p,i) => `
+    const raw = await callGemini(prompt, true);
+    const data = JSON.parse(raw);
+    
+    resultado.innerHTML = data.prompts.map(p => `
       <div class="prompt-card">
-        <button class="copy-btn" onclick="copyPrompt(this,${i})">COPIAR</button>
-        <div class="prompt-num">IMG ${String(p.num).padStart(2,'0')} — ${p.momento.toUpperCase()}</div>
-        <div class="prompt-text" id="pt-${i}">${p.prompt}</div>
-      </div>`).join("");
-    html += `<div class="action-bar"><button class="btn btn-mag btn-sm" onclick="copyAllPrompts()">COPIAR TODOS</button></div>`;
-    resultado.innerHTML = html;
-    resultado.dataset.prompts = JSON.stringify(data.prompts);
+        <div class="prompt-num">ESCENA ${p.num} - ${p.momento}</div>
+        <div class="prompt-text">${p.prompt}</div>
+        <button class="copy-btn" onclick="copySimple(this)">COPIAR</button>
+      </div>
+    `).join("");
   } catch(err) {
-    resultado.innerHTML = `<div class="status-bar" style="color:var(--magenta)">⚠ ${err.message}</div>`;
+    resultado.innerHTML = `<div class="status-bar" style="color:var(--magenta)">⚠ Error de formato en la IA. Intenta de nuevo.</div>`;
   } finally {
     loading.classList.remove("visible");
   }
 }
 
-function copyPrompt(btn, idx) {
-  navigator.clipboard.writeText(document.getElementById(`pt-${idx}`).textContent).then(() => {
-    btn.textContent = "✓ OK"; btn.classList.add("copied");
-    setTimeout(() => { btn.textContent = "COPIAR"; btn.classList.remove("copied"); }, 2000);
-  });
+// Utilidades
+function copyText(id) {
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text);
+  alert("Copiado al portapapeles");
 }
 
-function copyAllPrompts() {
-  try {
-    const prompts = JSON.parse(document.getElementById("prompts-resultado").dataset.prompts || "[]");
-    const text = prompts.map(p => `=== IMG ${String(p.num).padStart(2,'0')} — ${p.momento.toUpperCase()} ===\n${p.prompt}`).join("\n\n");
-    navigator.clipboard.writeText(text).then(() => {
-      const btn = event.target; btn.textContent = "✓ COPIADOS";
-      setTimeout(() => btn.textContent = "COPIAR TODOS", 2500);
-    });
-  } catch(e) {}
+function copySimple(btn) {
+  const text = btn.previousElementSibling.innerText;
+  navigator.clipboard.writeText(text);
+  btn.innerText = "✓";
+  setTimeout(() => btn.innerText = "COPIAR", 1000);
+}
+
+function pasarAPrompts() {
+  const guion = document.getElementById("guion-resultado").dataset.guion;
+  document.getElementById("guion-prompts").value = guion;
+  switchTab(2);
 }
 </script>
 </body>
